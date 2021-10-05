@@ -132,6 +132,17 @@ async def on_message(message):
     
   if content.startswith('$nuke'):
     await message.channel.send(';;play https://www.youtube.com/watch?v=04FfDVZ1O14&ab_channel=SKwon')
+  
+  if content.startswith('$inspire'):
+    response = requests.get('https://api.fisenko.net/v1/quotes/en/random')
+    dict = response.json()
+    quote = dict['text']+' - '+dict['author']['name']
+    await message.channel.send(quote)
+  
+  if content.startswith('$joke'):
+    response = requests.get('https://icanhazdadjoke.com/slack')
+    dict = response.json()
+    await message.channel.send(dict['attachments'][0]['text'])
 
 
 keep_alive()
