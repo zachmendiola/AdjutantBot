@@ -1,5 +1,5 @@
 
-players = ['Chomper#4072','demie#2551','Captain Bulbarus#2248','Ascendance#5342','Ginchey#8598','Alpal Esq.#6166','baramz#7249','El Hobo#2195']
+players = ['@Chomper#4072','@demie#2551','@Captain Bulbarus#2248','@Ascendance#5342','@Ginchey#8598','@Alpal Esq.#6166','@baramz#7249','@El Hobo#2195']
 
 def call(game):
   list = []
