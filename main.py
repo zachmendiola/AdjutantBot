@@ -20,6 +20,8 @@ bottoken = os.environ['bot_token']
 websterkey = os.environ['websterkey']
 client = discord.Client()
 users = ['Chomper#4072','demie#2551','Captain Bulbarus#2248','Ascendance#5342','Ginchey#8598','Alpal Esq.#6166','baramz#7249','El Hobo#2195','Chazington#9943','Doozy#5338']
+me = 'Ascendance#5342'
+current_date = str(date.today())
 
 @commands.command
 async def mention_ping(ctx, member : discord.Member):
@@ -28,6 +30,20 @@ async def mention_ping(ctx, member : discord.Member):
 @client.event
 async def on_ready():
     print('Logged in as {0.user}'.format(client))
+
+def check_date_and_reset_waifu(message):
+  if (str(date.today()) != current_date):
+    current_date = str(date.today())
+    reset_db_waifu(message)
+
+def reset_db_waifu(message):
+    for i in users:
+      try:
+        db[str(i)+'exp'][0] = db[str(i)+'exp'][3]+3
+        print(db[str(i)+'exp'])
+      except:
+        message.channel.send('Error parsing user '+i)
+    message.channel.send('Waifu rolls for the day have been manually reset.')
 
 #Event that monitors discord messages
 @client.event
@@ -38,27 +54,18 @@ async def on_message(message):
   content = message.content.lower()
   author = message.author
 
-  if content.startswith('$countstart') and str(message.author) == 'Ascendance#5342':
+  if content.startswith('$countstart') and str(message.author) == me:
     db['dailycounter'] = 0
     print('Counting down.')
-
- # if content.startswith('$checkexp'):
     
-
-  if content.startswith('$wreset') and str(message.author) == 'Ascendance#5342':
-    for i in users:
-      try:
-        db[str(i)+'exp'][0] = db[str(i)+'exp'][3]+3
-        print(db[str(i)+'exp'])
-      except:
-        await message.channel.send('Error parsing user '+i)
-    await message.channel.send('Waifu rolls for the day have been manually reset.')
+  if content.startswith('$wreset') and str(message.author) == me:
+    reset_db_waifu(message)
   
-  if content.startswith('$dbreset') and str(message.author) == 'Ascendance#5342':
+  if content.startswith('$dbreset') and str(message.author) == me:
     for i in users:
       db[str(i)+'exp'] = [3,0,10,1]
       
-  if content.startswith('$getusers') and str(message.author) == 'Ascendance#5342':
+  if content.startswith('$getusers') and str(message.author) == me:
     for i in users:
       print(db[i+'exp'])
   
@@ -124,6 +131,7 @@ async def on_message(message):
     db['latest'] = dict['url']
     
     print(message.author.name+'-'+categorywaifu)
+    check_date_and_reset_waifu(message)
     if db[str(message.author)+"exp"][0] <= 0:
       await message.channel.send('Sorry, you\'ve run out of waifu rolls for the day. :(')
       return
