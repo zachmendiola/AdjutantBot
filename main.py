@@ -13,6 +13,7 @@ import callgame
 from discord.ext import commands
 from keep_alive import keep_alive 
 from replit import db
+import queue
 
 db_host = 'adjutant-zach-9759.aivencloud.com'
 db_name = 'defaultdb'
@@ -22,6 +23,9 @@ client = discord.Client()
 users = ['Chomper#4072','demie#2551','Captain Bulbarus#2248','Ascendance#5342','Ginchey#8598','Alpal Esq.#6166','baramz#7249','El Hobo#2195','Chazington#9943','Doozy#5338']
 me = 'Ascendance#5342'
 current_date = str(date.today())
+db["fastpass"] = []
+fastpassqueue = queue.Queue()
+
 
 @commands.command
 async def mention_ping(ctx, member : discord.Member):
@@ -31,19 +35,22 @@ async def mention_ping(ctx, member : discord.Member):
 async def on_ready():
     print('Logged in as {0.user}'.format(client))
 
-def check_date_and_reset_waifu(message):
+async def check_date_and_reset_waifu(message):
+  global current_date
+  print(current_date)
   if (str(date.today()) != current_date):
     current_date = str(date.today())
-    reset_db_waifu(message)
+    print("Current date changed to "+current_date)
+    await reset_db_waifu(message)
 
-def reset_db_waifu(message):
+async def reset_db_waifu(message):
     for i in users:
       try:
         db[str(i)+'exp'][0] = db[str(i)+'exp'][3]+3
         print(db[str(i)+'exp'])
       except:
-        message.channel.send('Error parsing user '+i)
-    message.channel.send('Waifu rolls for the day have been manually reset.')
+        await message.channel.send('Error parsing user '+i)
+    await message.channel.send('Waifu rolls for the day have been manually reset.')
 
 #Event that monitors discord messages
 @client.event
@@ -51,15 +58,18 @@ async def on_message(message):
   if message.author == client.user:
     return
 
+  print(current_date)
   content = message.content.lower()
   author = message.author
+
+
 
   if content.startswith('$countstart') and str(message.author) == me:
     db['dailycounter'] = 0
     print('Counting down.')
     
   if content.startswith('$wreset') and str(message.author) == me:
-    reset_db_waifu(message)
+    await reset_db_waifu(message)
   
   if content.startswith('$dbreset') and str(message.author) == me:
     for i in users:
@@ -68,6 +78,35 @@ async def on_message(message):
   if content.startswith('$getusers') and str(message.author) == me:
     for i in users:
       print(db[i+'exp'])
+  
+  if content == ('$fastpass'):
+    if author.name in db['fastpass']:
+      await message.channel.send('You are already in queue!')
+    else:
+      for i in db['fastpass']:
+        print(i)
+      fastpassqueue.put(author.name)
+      db['fastpass'].append(author.name)
+      await message.channel.send(author.name+" has been added to the fastpass queue.")
+  
+  if content.startswith('$checkpass'):
+    if fastpassqueue.empty() == False:
+      await message.channel.send("The fastpass queue is as follows:")
+      for i in db['fastpass']:
+        await message.channel.send(i)
+    else:
+      await message.channel.send("The fastpass queue is empty.")
+
+  
+  if content.startswith('$nextinline'):
+    player = fastpassqueue.get()
+    if player == author.name:
+      db['fastpass'].remove(author.name)
+      await message.channel.send(player+" is up!")
+    else:
+      message.channel.send("You can't dequeue someone else!")
+
+
   
   if content.startswith('$hola') or content.startswith("$hello"):
     await messages.hello(message)
@@ -131,7 +170,7 @@ async def on_message(message):
     db['latest'] = dict['url']
     
     print(message.author.name+'-'+categorywaifu)
-    check_date_and_reset_waifu(message)
+    await check_date_and_reset_waifu(message)
     if db[str(message.author)+"exp"][0] <= 0:
       await message.channel.send('Sorry, you\'ve run out of waifu rolls for the day. :(')
       return
