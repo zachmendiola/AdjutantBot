@@ -1,5 +1,6 @@
 import discord
 import os
+import exp
 import random
 import time
 import requests
@@ -20,7 +21,7 @@ db_name = 'defaultdb'
 bottoken = os.environ['bot_token']
 websterkey = os.environ['websterkey']
 client = discord.Client()
-users = ['Chomper#4072','demie#2551','Captain Bulbarus#2248','Ascendance#5342','Ginchey#8598','Alpal Esq.#6166','baramz#7249','El Hobo#2195','Chazington#9943','Doozy#5338']
+users = ['Chomper#4072','demie#2551','Captain Bulbarus#2248','Ascendance#5342','Ginchey#8598','Alpal Esq.#6166','baramz#7249','El Hobo#2195','Chazington#9943','Doozy#5338','forte#4491','Liferian#9481']
 me = 'Ascendance#5342'
 current_date = str(date.today())
 db["fastpass"] = []
@@ -46,8 +47,12 @@ async def check_date_and_reset_waifu(message):
 async def reset_db_waifu(message):
     for i in users:
       try:
-        db[str(i)+'exp'][0] = db[str(i)+'exp'][3]+3
-        print(db[str(i)+'exp'])
+        if str(i)+'exp' in db:
+          db[str(i)+'exp'][0] = db[str(i)+'exp'][3]+3
+          print(str(i)+'exp')
+          print(db[str(i)+'exp'])
+        else:
+          db[str(i)+'exp'] = [4, 0, 10, 1]
       except:
         await message.channel.send('Error parsing user '+i)
     await message.channel.send('Waifu rolls for the day have been manually reset.')
@@ -61,8 +66,10 @@ async def on_message(message):
   print(current_date)
   content = message.content.lower()
   author = message.author
-
-
+  channel = message. channel
+  name = str(author)
+  exp.add_exp(name, 10)
+  await exp.check_exp(name, channel)
 
   if content.startswith('$countstart') and str(message.author) == me:
     db['dailycounter'] = 0
@@ -73,13 +80,15 @@ async def on_message(message):
   
   if content.startswith('$dbreset') and str(message.author) == me:
     for i in users:
-      db[str(i)+'exp'] = [3,0,10,1]
+      db[str(i)+'exp'] = [4,0,10,1]
       
   if content.startswith('$getusers') and str(message.author) == me:
     for i in users:
       print(db[i+'exp'])
   
   if content == ('$fastpass'):
+    exp.add_exp(name, 10)
+    await exp.check_exp(name, channel)
     if author.name in db['fastpass']:
       await message.channel.send('You are already in queue!')
     else:
@@ -99,12 +108,14 @@ async def on_message(message):
 
   
   if content.startswith('$nextinline'):
+    exp.add_exp(name, 20)
+    await exp.check_exp(name, channel)
     player = fastpassqueue.get()
     if player == author.name:
       db['fastpass'].remove(author.name)
       await message.channel.send(player+" is up!")
     else:
-      message.channel.send("You can't dequeue someone else!")
+      await message.channel.send("You can't dequeue someone else!")
 
 
   
@@ -112,7 +123,10 @@ async def on_message(message):
     await messages.hello(message)
     
   if content.startswith('$experts'):
+    exp.add_exp(name, 1000)
+    await exp.check_exp(name, channel)
     await messages.experts(message)
+
     
   if content == ('$checktime'):
     print(db['dailycounter'])
@@ -137,6 +151,8 @@ async def on_message(message):
     
 
   if content.startswith('$waifu'):
+    exp.add_exp(name, 20)
+    await exp.check_exp(name, channel)
     categories = ['waifu','neko','shinobu','megumin','bully','cuddle','cry','hug',
     'lick','pat','smug','bonk','yeet','blush','smile','wave','nom','bite','slap',
     'kill','kick','happy','wink','poke','dance','cringe']
